@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onModuleChange }
         <div className="flex items-center space-x-2">
           <Shield className="h-8 w-8 text-bastion-mist" />
           <div>
-            <h1 className="text-xl font-bold text-bastion-mist tracking-wider">THE BASTION</h1>
+            <h1 className="text-xl font-bold text-bastion-mist tracking-wider">SUGAAL</h1>
             <p className="text-xs text-bastion-ash tracking-widest">PRISON MANAGEMENT SYSTEM</p>
           </div>
         </div>
