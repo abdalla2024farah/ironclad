@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'jersey': ['"Jersey 15"', 'sans-serif'], // Or you can keep 'alumni' and just change the font name
+        'alumni': ['"Alumni Sans Collegiate One"', 'sans-serif'],
       },
       colors: {
         'bastion': {

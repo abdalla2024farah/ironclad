@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Inmate } from '../../types';
 import { InmateForm } from './InmateForm';
-import { Search, Filter, Eye, Edit, MoreHorizontal, AlertTriangle, MapPin, Radio, UserPlus } from 'lucide-react';
+import { InmateDetails } from './InmateDetails'; // Import the new component
+import { Search, Filter, Eye, Edit, MoreHorizontal, AlertTriangle, MapPin, UserPlus } from 'lucide-react';
 
 interface InmateControlProps {
   inmates: Inmate[];
@@ -15,12 +16,13 @@ export const InmateControl: React.FC<InmateControlProps> = ({ inmates, addInmate
   const [filterThreat, setFilterThreat] = useState<string>('all');
   const [isCreating, setIsCreating] = useState(false);
   const [editingInmate, setEditingInmate] = useState<Inmate | undefined>(undefined);
+  const [viewingInmate, setViewingInmate] = useState<Inmate | undefined>(undefined); // State for viewing
 
   const filteredInmates = inmates.filter(inmate => {
     const matchesSearch =
-      inmate.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inmate.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inmate.inmateNumber.includes(searchTerm);
+      (inmate.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (inmate.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (inmate.inmateNumber || '').includes(searchTerm);
 
     const matchesStatus = filterStatus === 'all' || inmate.status === filterStatus;
     const matchesThreat = filterThreat === 'all' || inmate.threatLevel === filterThreat;
@@ -58,11 +60,34 @@ export const InmateControl: React.FC<InmateControlProps> = ({ inmates, addInmate
     }
   };
 
-  const handleSaveInmate = (inmate: Inmate) => {
+  const handleSaveInmate = (formData: Partial<Inmate>) => {
     if (editingInmate) {
-      updateInmate(inmate);
+      updateInmate({ ...editingInmate, ...formData });
     } else {
-      addInmate(inmate);
+      const newInmate: Inmate = {
+        id: new Date().toISOString(),
+        dateOfBirth: 'N/A',
+        admissionDate: new Date().toISOString().split('T')[0],
+        classification: 'MINIMUM',
+        charges: [],
+        sentence: 'N/A',
+        behavior: 'COMPLIANT',
+        medicalFlags: [],
+        disciplinaryActions: 0,
+        biometricId: `BIO-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        rfidTag: `RFID-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        currentLocation: 'Receiving',
+        lastMovement: new Date().toISOString(),
+        cellBlock: 'N/A',
+        cellNumber: 'N/A',
+        ...formData,
+        inmateNumber: formData.inmateNumber || 'N/A',
+        firstName: formData.firstName || 'N/A',
+        lastName: formData.lastName || 'N/A',
+        status: formData.status || 'ACTIVE',
+        threatLevel: formData.threatLevel || 'LOW',
+      };
+      addInmate(newInmate);
     }
     setIsCreating(false);
     setEditingInmate(undefined);
@@ -70,6 +95,7 @@ export const InmateControl: React.FC<InmateControlProps> = ({ inmates, addInmate
 
   return (
     <div className="p-6">
+      {viewingInmate && <InmateDetails inmate={viewingInmate} onClose={() => setViewingInmate(undefined)} />}
       {(isCreating || editingInmate) && (
         <InmateForm
           inmate={editingInmate}
@@ -82,18 +108,17 @@ export const InmateControl: React.FC<InmateControlProps> = ({ inmates, addInmate
       )}
       <div className="mb-6 flex justify-between items-center">
         <div>
-            <h1 className="text-2xl font-bold text-bastion-mist mb-1 tracking-wider">INMATE CONTROL</h1>
-            <p className="text-bastion-ash text-sm tracking-wider">COMPREHENSIVE INMATE MONITORING AND MANAGEMENT</p>
+          <h1 className="text-2xl font-bold text-bastion-mist mb-1 tracking-wider">INMATE CONTROL</h1>
+          <p className="text-bastion-ash text-sm tracking-wider">COMPREHENSIVE INMATE MONITORING AND MANAGEMENT</p>
         </div>
         <button
-            onClick={() => setIsCreating(true)}
-            className="bg-bastion-active text-bastion-mist px-4 py-2 hover:bg-opacity-80 flex items-center space-x-2 text-xs font-bold tracking-wider"
+          onClick={() => setIsCreating(true)}
+          className="bg-bastion-active text-bastion-mist px-4 py-2 hover:bg-opacity-80 flex items-center space-x-2 text-xs font-bold tracking-wider"
         >
-            <UserPlus className="h-4 w-4" />
-            <span>CREATE NEW INMATE</span>
+          <UserPlus className="h-4 w-4" />
+          <span>CREATE NEW INMATE</span>
         </button>
-    </div>
-
+      </div>
 
       <div className="bg-bastion-dark border border-bastion-steel">
         {/* Search and Filters */}
@@ -146,27 +171,13 @@ export const InmateControl: React.FC<InmateControlProps> = ({ inmates, addInmate
           <table className="w-full">
             <thead className="bg-bastion-charcoal">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">
-                  INMATE
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">
-                  STATUS
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">
-                  THREAT LEVEL
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">
-                  LOCATION
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">
-                  SENTENCE
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">
-                  BEHAVIOR
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">
-                  ACTIONS
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">INMATE</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">STATUS</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">THREAT LEVEL</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">LOCATION</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">SENTENCE</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">BEHAVIOR</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-bastion-mist tracking-wider">ACTIONS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-bastion-steel">
@@ -180,60 +191,34 @@ export const InmateControl: React.FC<InmateControlProps> = ({ inmates, addInmate
                         </div>
                       </div>
                       <div className="ml-3">
-                        <div className="text-xs font-bold text-bastion-mist tracking-wider">
-                          {inmate.firstName} {inmate.lastName}
-                        </div>
+                        <div className="text-xs font-bold text-bastion-mist tracking-wider">{inmate.firstName} {inmate.lastName}</div>
                         <div className="text-xs text-bastion-ash tracking-wider">#{inmate.inmateNumber}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-bold tracking-wider ${getStatusColor(inmate.status)}`}>
-                      {inmate.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-bold tracking-wider ${getThreatColor(inmate.threatLevel)}`}>
-                      {inmate.threatLevel}
-                    </span>
-                  </td>
+                  <td className="px-4 py-3"><span className={`inline-flex px-2 py-1 text-xs font-bold tracking-wider ${getStatusColor(inmate.status)}`}>{inmate.status}</span></td>
+                  <td className="px-4 py-3"><span className={`inline-flex px-2 py-1 text-xs font-bold tracking-wider ${getThreatColor(inmate.threatLevel)}`}>{inmate.threatLevel}</span></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center space-x-1">
                       <MapPin className="h-3 w-3 text-bastion-ash" />
-                      <span className="text-xs font-bold text-bastion-mist tracking-wider">
-                        {inmate.cellBlock}-{inmate.cellNumber}
-                      </span>
+                      <span className="text-xs font-bold text-bastion-mist tracking-wider">{inmate.cellBlock}-{inmate.cellNumber}</span>
                     </div>
                     <div className="text-xs text-bastion-ash tracking-wider">{inmate.currentLocation}</div>
                   </td>
-                  <td className="px-4 py-3 text-xs font-bold text-bastion-mist tracking-wider">
-                    {inmate.sentence}
-                  </td>
+                  <td className="px-4 py-3 text-xs font-bold text-bastion-mist tracking-wider">{inmate.sentence}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center space-x-2">
-                      <span className={`text-xs font-bold tracking-wider ${getBehaviorColor(inmate.behavior)}`}>
-                        {inmate.behavior}
-                      </span>
-                      {inmate.medicalFlags.length > 0 && (
-                        <AlertTriangle className="h-3 w-3 text-bastion-alert" title="MEDICAL ALERT" />
-                      )}
-                      {inmate.disciplinaryActions > 0 && (
-                        <span className="text-xs text-bastion-alert font-bold">({inmate.disciplinaryActions})</span>
-                      )}
+                      <span className={`text-xs font-bold tracking-wider ${getBehaviorColor(inmate.behavior)}`}>{inmate.behavior}</span>
+                      {inmate.medicalFlags.length > 0 && (<AlertTriangle className="h-3 w-3 text-bastion-alert" title="MEDICAL ALERT" />)}
+                      {inmate.disciplinaryActions > 0 && (<span className="text-xs text-bastion-alert font-bold">({inmate.disciplinaryActions})</span>)}
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                  <div className="flex items-center space-x-2">
-                      <button className="text-bastion-mist hover:text-white">
-                          <Eye className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => setEditingInmate(inmate)} className="text-bastion-mist hover:text-white">
-                          <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="text-bastion-ash hover:text-bastion-mist">
-                          <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                  </div>
+                    <div className="flex items-center space-x-2">
+                      <button onClick={() => setViewingInmate(inmate)} className="text-bastion-mist hover:text-white"><Eye className="h-4 w-4" /></button>
+                      <button onClick={() => setEditingInmate(inmate)} className="text-bastion-mist hover:text-white"><Edit className="h-4 w-4" /></button>
+                      <button className="text-bastion-ash hover:text-bastion-mist"><MoreHorizontal className="h-4 w-4" /></button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -243,12 +228,8 @@ export const InmateControl: React.FC<InmateControlProps> = ({ inmates, addInmate
 
         {/* Footer */}
         <div className="bg-bastion-charcoal px-4 py-3 border-t border-bastion-steel flex items-center justify-between">
-          <div className="text-xs text-bastion-ash tracking-wider font-bold">
-            SHOWING {filteredInmates.length} OF {inmates.length} INMATES
-          </div>
-          <div className="text-xs text-bastion-ash tracking-wider font-bold">
-            LAST UPDATE: {new Date().toLocaleTimeString()}
-          </div>
+          <div className="text-xs text-bastion-ash tracking-wider font-bold">SHOWING {filteredInmates.length} OF {inmates.length} INMATES</div>
+          <div className="text-xs text-bastion-ash tracking-wider font-bold">LAST UPDATE: {new Date().toLocaleTimeString()}</div>
         </div>
       </div>
     </div>
